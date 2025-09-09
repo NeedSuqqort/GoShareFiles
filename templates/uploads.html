@@ -1,0 +1,94 @@
+{{template "layout.html" .}}
+
+{{define "head"}}
+<style>
+    .files-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+        padding: 1rem;
+    }
+    .file-card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 1.5rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .file-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .file-name {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        word-break: break-word;
+    }
+    .file-info {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    .file-actions {
+        margin-top: 1.5rem;
+        display: flex;
+        gap: 1rem;
+    }
+    .file-action-btn {
+        flex: 1;
+        padding: 0.5rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        text-align: center;
+        transition: background-color 0.3s ease;
+    }
+    .download-btn {
+        background-color: #667eea;
+        color: white;
+    }
+    .download-btn:hover {
+        background-color: #764ba2;
+    }
+    .delete-btn {
+        background-color: #ff4757;
+        color: white;
+    }
+    .delete-btn:hover {
+        background-color: #ff6b81;
+    }
+    .no-files {
+        text-align: center;
+        padding: 2rem;
+        color: #666;
+    }
+</style>
+{{end}}
+
+{{define "content"}}
+<h1 style="text-align: center; margin-bottom: 2rem;">Uploaded Files</h1>
+<div class="files-grid">
+    {{if .Files}}
+        {{range .Files}}
+        <div class="file-card">
+            <div class="file-name">{{.Name}}</div>
+            <div class="file-info">Size: {{.Size}}</div>
+            <div class="file-info">Uploaded: {{.UploadTime}}</div>
+            <div class="file-actions">
+                <a href="/download/{{.ID}}" class="file-action-btn download-btn">Download</a>
+                <form action="/delete/{{.ID}}" method="post" style="flex: 1;">
+                    <button type="submit" class="file-action-btn delete-btn">Delete</button>
+                </form>
+            </div>
+        </div>
+        {{end}}
+    {{else}}
+        <div class="no-files">
+            <h2>No files uploaded yet</h2>
+            <p>Go to the upload page to share some files!</p>
+        </div>
+    {{end}}
+</div>
+{{end}}

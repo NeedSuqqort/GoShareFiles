@@ -1,0 +1,66 @@
+{{template "layout.html" .}}
+
+{{define "head"}}
+<style>
+    .upload-form {
+        text-align: center;
+        padding: 2rem;
+    }
+    .file-input-wrapper {
+        margin: 2rem 0;
+        position: relative;
+    }
+    .file-input-wrapper input[type="file"] {
+        display: none;
+    }
+    .custom-file-input {
+        background-color: #764ba2;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 5px;
+        cursor: pointer;
+        display: inline-block;
+        transition: background-color 0.3s ease;
+    }
+    .custom-file-input:hover {
+        background-color: #667eea;
+    }
+    .selected-file {
+        margin-top: 1rem;
+        color: #666;
+    }
+    .submit-btn {
+        background-color: #667eea;
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.3s ease;
+    }
+    .submit-btn:hover {
+        background-color: #764ba2;
+    }
+</style>
+<script>
+    function updateFileName(input) {
+        const fileName = input.files[0]?.name || 'No file selected';
+        document.getElementById('selected-file').textContent = fileName;
+    }
+</script>
+{{end}}
+
+{{define "content"}}
+<div class="upload-form">
+    <h1>Upload File</h1>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <div class="file-input-wrapper">
+            <label class="custom-file-input" for="file">Choose File</label>
+            <input type="file" id="file" name="file" onchange="updateFileName(this)" required>
+            <div id="selected-file" class="selected-file">No file selected</div>
+        </div>
+        <button type="submit" class="submit-btn">Upload</button>
+    </form>
+</div>
+{{end}}

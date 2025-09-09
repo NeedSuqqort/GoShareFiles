@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	fileServer "filesharing/pkg/FileServerHandler"
+	client "filesharing/cmd/client"
+	server "filesharing/pkg/FileServerHandler"
 	"filesharing/pkg/sysinfo"
 	"fmt"
 	"log"
@@ -10,11 +11,8 @@ import (
 
 func Start_server() {
 	fmt.Println("Go Version:", sysinfo.GoVersion())
-
-	http.Handle("/", http.FileServer(http.Dir("./static")))
-	fileServer.Init()
-	// http.HandleFunc("/increment", incrementCounter)
-
+	server.Init()
+	client.Init()
 	fmt.Println("Starting server on :8081")
 	log.Fatal(http.ListenAndServe(":8081", nil))
 }

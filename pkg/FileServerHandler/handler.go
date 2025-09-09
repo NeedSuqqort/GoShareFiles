@@ -11,36 +11,43 @@ const uploadPath = "./uploads/"
 
 func Init () {
 	os.MkdirAll(uploadPath, os.ModePerm)
-	http.HandleFunc("/upload", uploadHandler)
+	http.HandleFunc("/upload/", uploadHandler)
     http.HandleFunc("/download/", downloadHandler)
 }
 
 func uploadHandler(writer http.ResponseWriter, request *http.Request) {
-	if request.Method != http.MethodPost {
-		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
-		return
+	switch request.Method {
+
+		case http.MethodPost:
+			if request.Method != http.MethodPost {
+				http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
+				return
+			}
+
+			file, header, err := request.FormFile("file")
+			if err != nil {
+				http.Error(writer, "Could not receive your uploaded file, please try again.", http.StatusBadRequest)
+			}
+			defer file.Close()
+
+			outFile, err := os.Create(uploadPath + header.Filename)
+			if err != nil {
+				http.Error(writer, "Unable to create the file. ", http.StatusInternalServerError)
+				return
+			}
+			defer outFile.Close()
+
+			_, err = io.Copy(outFile, file) 
+			if err != nil {
+				http.Error(writer, "Unable to save the file. ", http.StatusInternalServerError)
+			}
+
+			fmt.Fprintf(writer, "File %s uploaded successfully.", header.Filename)
+
+		default:
+			http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
+		
 	}
-
-	file, header, err := request.FormFile("file")
-	if err != nil {
-		http.Error(writer, "Could not receive your uploaded file, please try again.", http.StatusBadRequest)
-	}
-	defer file.Close()
-
-	outFile, err := os.Create(uploadPath + header.Filename)
-	if err != nil {
-		http.Error(writer, "Unable to create the file. ", http.StatusInternalServerError)
-		return
-	}
-	defer outFile.Close()
-
-	_, err = io.Copy(outFile, file) 
-	if err != nil {
-		http.Error(writer, "Unable to save the file. ", http.StatusInternalServerError)
-	}
-
-	fmt.Fprintf(writer, "File %s uploaded successfully.", header.Filename)
-
 }
 
 func downloadHandler(writer http.ResponseWriter, request *http.Request) {
