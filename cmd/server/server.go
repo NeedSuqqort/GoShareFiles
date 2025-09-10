@@ -11,8 +11,8 @@ import (
 
 func Start_server() {
 	fmt.Println("Go Version:", sysinfo.GoVersion())
-	server.Init()
 	client.Init()
+	server.Init()
 	fmt.Println("Starting server on :8081")
 	log.Fatal(http.ListenAndServe(":8081", nil))
 }

@@ -2,7 +2,7 @@
 
 {{define "head"}}
 <style>
-    .upload-form {
+    #upload-form {
         text-align: center;
         padding: 2rem;
     }
@@ -44,15 +44,42 @@
     }
 </style>
 <script>
+
     function updateFileName(input) {
         const fileName = input.files[0]?.name || 'No file selected';
         document.getElementById('selected-file').textContent = fileName;
     }
+
+    $(document).ready(() => {
+        console.log($("#upload-form form")[0])
+        $("#upload-form").on('submit',(event) => {
+            event.preventDefault()
+            const data = new FormData($("#upload-form form")[0])
+
+            fetch('/upload/', {
+                method: "POST",
+                body: data
+            })
+            .then((response) => {
+                if (response.status === 200) {
+                    $("#message").text("File uploaded successfully.")
+                    $("#file").text("")
+                    $("#upload-form form")[0].reset()
+                } else {
+                    $("#message").text("Upload failed. Please try again.")
+                }
+            })
+            .catch((error) => {
+                console.log(error)
+            })
+        })
+    })
+
 </script>
 {{end}}
 
 {{define "content"}}
-<div class="upload-form">
+<div id="upload-form">
     <h1>Upload File</h1>
     <form action="/upload" method="post" enctype="multipart/form-data">
         <div class="file-input-wrapper">
@@ -60,7 +87,10 @@
             <input type="file" id="file" name="file" onchange="updateFileName(this)" required>
             <div id="selected-file" class="selected-file">No file selected</div>
         </div>
-        <button type="submit" class="submit-btn">Upload</button>
+        <button class="submit-btn" type="submit">Upload</button>
     </form>
+    <div id="message">
+
+    </div>
 </div>
 {{end}}

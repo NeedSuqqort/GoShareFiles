@@ -65,30 +65,48 @@
         color: #666;
     }
 </style>
+<script>
+    function handleViewMore(path, isDir) {
+        if (isDir === "false") {
+            return
+        }
+        fetch(`/uploads/${path}`)
+        .then((res) => {
+            if (res.ok) {
+                window.location.href = `/uploads/${path}`
+            }
+        })
+        .catch((error) => {
+            console.log(error)
+        })
+    }
+</script>
 {{end}}
 
 {{define "content"}}
 <h1 style="text-align: center; margin-bottom: 2rem;">Uploaded Files</h1>
-<div class="files-grid">
     {{if .Files}}
+    <div class="files-grid">
         {{range .Files}}
-        <div class="file-card">
-            <div class="file-name">{{.Name}}</div>
-            <div class="file-info">Size: {{.Size}}</div>
-            <div class="file-info">Uploaded: {{.UploadTime}}</div>
-            <div class="file-actions">
-                <a href="/download/{{.ID}}" class="file-action-btn download-btn">Download</a>
-                <form action="/delete/{{.ID}}" method="post" style="flex: 1;">
-                    <button type="submit" class="file-action-btn delete-btn">Delete</button>
-                </form>
+            <div class="file-card" onclick="handleViewMore('{{.Path}}','{{.IsDir}}')">
+                <div class="file-name">{{.Name}}</div>
+                {{if not .IsDir}}
+                    <div class="file-info">Size: {{.Size}} B</div>
+                {{end }}
+                <div class="file-info">Last updated: {{.Time}}</div>
+                <div class="file-actions">
+                    <a href="/download/{{.Path}}" class="file-action-btn download-btn">Download</a>
+                    <a href="/delete/{{.Path}}" class="file-action-btn delete-btn">Delete</a>
+                </div>
             </div>
-        </div>
         {{end}}
+    </div>
     {{else}}
         <div class="no-files">
             <h2>No files uploaded yet</h2>
             <p>Go to the upload page to share some files!</p>
+
         </div>
     {{end}}
-</div>
+
 {{end}}
