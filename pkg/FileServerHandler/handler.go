@@ -29,11 +29,15 @@ func Init() {
 
 func uploadHandler(writer http.ResponseWriter, request *http.Request) {
 
+
 	switch request.Method {
 
 		case "POST":
 
 			file, header, err := request.FormFile("file")
+			path := request.FormValue("path")
+			fmt.Println("Upload path:", path)
+
 			if err != nil {
 				http.Error(writer, "Could not receive your uploaded file, please try again.", http.StatusBadRequest)
 			}
@@ -61,7 +65,6 @@ func uploadHandler(writer http.ResponseWriter, request *http.Request) {
 
 func filesHandler(writer http.ResponseWriter, request *http.Request) {
 	filename := strings.TrimPrefix(request.URL.Path, "/files/")
-	fmt.Println(UploadPath + filename)
 
 	switch request.Method {
 
@@ -72,10 +75,41 @@ func filesHandler(writer http.ResponseWriter, request *http.Request) {
 				return
 			}
 			defer file.Close()
-			writer.Header().Set("Content-Disposition", "attachment; filename="+filename)
+			writer.Header().Set("Content-Disposition", "attachment; filename="+file.Name())
 			writer.Header().Set("Content-Type", "application/octet-stream")
 			io.Copy(writer, file)
 			fmt.Fprintf(writer, "File %s downloaded successfully.", filename)
+		
+		case "POST":
+
+			err := request.ParseMultipartForm(200 << 20) // Max 200MB
+			
+			if err != nil {
+				http.Error(writer, "Wrong format.", http.StatusBadRequest)
+			}
+
+			path := request.FormValue("path")
+			fmt.Println("Upload path:", path)
+			file, header, err := request.FormFile("file")
+
+			if err != nil {
+				http.Error(writer, "Could not receive your uploaded file, please try again.", http.StatusBadRequest)
+			}
+			defer file.Close()
+
+			outFile, err := os.Create(UploadPath + strings.TrimPrefix(path, UploadPath[1:]) + "/" + header.Filename)
+			if err != nil {
+				http.Error(writer, "Unable to create the file.", http.StatusInternalServerError)
+				return
+			}
+			defer outFile.Close()
+
+			_, err = io.Copy(outFile, file)
+			if err != nil {
+				http.Error(writer, "Unable to save the file. ", http.StatusInternalServerError)
+			}
+
+			fmt.Fprintf(writer, "File %s uploaded successfully.", header.Filename)
 
 		case "DELETE":
 			target := UploadPath + filename

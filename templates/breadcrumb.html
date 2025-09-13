@@ -14,5 +14,15 @@
         margin: 0 0.5rem;
     }
 </style>
-<div class="breadcrumb">
-</div>
+{{ if . }}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        {{ range . }}
+        <span>
+            <a href="{{ .URL }}">{{ .DisplayName }}</a> 
+            {{ if not .IsEndOfPath }} > {{ end }}  
+        </span>
+        {{ end }}
+    </ol>
+</nav>
+{{ end }}

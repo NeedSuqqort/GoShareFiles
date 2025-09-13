@@ -151,8 +151,10 @@
         $("#upload-bar-form").on('submit',(event) => {
             event.preventDefault()
             const data = new FormData($("#upload-bar-form")[0])
+            data.append("path", window.location.pathname)
+            console.log(data)
 
-            fetch('/upload/', {
+            fetch('/files/', {
                 method: "POST",
                 body: data
             })
@@ -195,6 +197,7 @@
 
 {{define "content"}}
 <h1 style="text-align: center; margin-bottom: 2rem;">Uploaded Files</h1>
+{{template "breadcrumb.html" .Breadcrumbs}}
 <div class="upload-bar">
     <form id="upload-bar-form" action="/upload" method="post" enctype="multipart/form-data">
         <input type="file" name="file" class="upload-input" required />

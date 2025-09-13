@@ -14,8 +14,8 @@ func Init () {
 }
 
 func render (writer http.ResponseWriter, data interface{}, templates ...string ) {
-	t, err := template.ParseFiles(templates...)
-	err = t.Execute(writer, data)
+	t := template.Must(template.ParseFiles(templates...))
+	err := t.Execute(writer, data)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
