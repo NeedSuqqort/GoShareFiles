@@ -1,6 +1,7 @@
 package fileserverhandler
 
 import (
+	"archive/zip"
 	"fmt"
 	"io"
 	"net/http"
@@ -69,16 +70,65 @@ func filesHandler(writer http.ResponseWriter, request *http.Request) {
 	switch request.Method {
 
 		case "GET":
-			file, err := os.Open(UploadPath + filename)
-			if err != nil {
-				http.Error(writer, "Unable to locate the file. Check filename.", http.StatusNotFound)
-				return
+			_, e := os.ReadDir(filepath.Join(UploadPath, filename))
+			if e != nil {
+				if pathErr, ok := e.(*os.PathError); ok {
+					file, err := os.Open(filepath.Join(UploadPath, filename))
+					if err != nil {
+						http.Error(writer, "Unable to read the file. Check if the file is corrupted.", http.StatusNotFound)
+						return
+					}
+					defer file.Close()
+					writer.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(filename))
+					writer.Header().Set("Content-Type", "application/octet-stream")
+					io.Copy(writer, file)
+					fmt.Fprintf(writer, "File %s downloaded successfully.", filename)
+
+				} else {
+					http.Error(writer, pathErr.Error(), http.StatusNotFound)
+				}
+			} else {
+				
+				zipfile := filepath.Base(filename) + ".zip"
+				zipWriter := zip.NewWriter(writer)
+
+				defer zipWriter.Close()
+								
+				writer.Header().Set("Content-Disposition", "attachment; filename="+zipfile)
+				writer.Header().Set("Content-Type", "application/zip")
+
+				err := filepath.Walk(filepath.Join(UploadPath,filename), func(path string, info os.FileInfo, err error) error {
+					if err != nil {
+						return err
+					}
+
+					if info.IsDir() {
+						return nil
+					}
+
+					path = filepath.ToSlash(path)
+					file, err := os.Open(path)
+					if err != nil {
+						return err
+					}
+					defer file.Close()
+
+					fmt.Println("Zipping file:", path)
+					fmt.Println("Copying from:", file.Name())
+
+					zipFile, err := zipWriter.Create(path)
+					if err != nil {
+						return err
+					}
+
+					_, err = io.Copy(zipFile, file)
+					return err
+				})
+
+				if err != nil {
+					http.Error(writer, "Unable to zip the folder. Please retry by downloading again.", http.StatusInternalServerError)
+				}
 			}
-			defer file.Close()
-			writer.Header().Set("Content-Disposition", "attachment; filename="+file.Name())
-			writer.Header().Set("Content-Type", "application/octet-stream")
-			io.Copy(writer, file)
-			fmt.Fprintf(writer, "File %s downloaded successfully.", filename)
 		
 		case "POST":
 
