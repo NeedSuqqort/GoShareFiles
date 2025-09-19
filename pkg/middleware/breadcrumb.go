@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"net/http"
 	"context"
+	"net/http"
 	"strings"
 )
 
@@ -18,11 +18,16 @@ const breadcrumbKey ctx = "breadcrumbs"
 func BreadcrumbMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		curpath := "/uploads/"
-		path := strings.Split(strings.TrimPrefix(request.URL.Path, "/uploads/"),"/")
-		breadcrumbs := []BreadCrumbData{
-			{DisplayName: "Home", URL: "/uploads/", IsEndOfPath: false},
+		path := strings.TrimPrefix(request.URL.Path, "/uploads/")
+
+		if path == "" {
+			next.ServeHTTP(writer, request)
+			return
 		}
-		for _, folderName := range path {
+
+		subpaths := strings.Split(path,"/")
+		breadcrumbs := []BreadCrumbData{}
+		for _, folderName := range subpaths {
 			if folderName == "" {
 				continue
 			}

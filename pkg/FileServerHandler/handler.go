@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"encoding/json"
+	db "filesharing/internal/data"
 )
 
 const UploadPath = "./uploads/"
@@ -21,11 +23,21 @@ type FileInfo struct {
 	IsDir bool        `json:"isDir"`
 }
 
+type RepoName struct {
+    Name string `json:"name"`
+}
+
+type Response struct {
+    AccessCode string `json:"access_code"`
+    Status     int    `json:"status"`
+}
+
 func Init() {
 	os.MkdirAll(UploadPath, os.ModePerm)
 	http.HandleFunc("/upload/", uploadHandler)
 	http.HandleFunc("/files/", filesHandler)
 	http.HandleFunc("/create-folder/", folderHandler)
+	http.HandleFunc("/create-repo/", repoHandler)
 }
 
 func uploadHandler(writer http.ResponseWriter, request *http.Request) {
@@ -192,8 +204,8 @@ func GetServerFilesHandler(path string) map[string]interface{} {
 		fmt.Println(err)
 		return nil
 	}
-	var fileInfos []FileInfo
 
+	var fileInfos []FileInfo
 	for _, file := range files {
 		fileInfo, err := file.Info()
 		if err != nil {
@@ -219,13 +231,53 @@ func folderHandler(writer http.ResponseWriter, request *http.Request) {
 	_, err := os.Stat(targetPath)
 
 	if os.IsNotExist(err) {
-		fmt.Println("Success")
 		err := os.Mkdir(targetPath, 0755)
 		if err != nil {
 			fmt.Println(err)
 			http.Error(writer, "Failed to create the folder, please refresh and try again.", http.StatusInternalServerError)
 		}
+		fmt.Println("Success")
 	} else {
 		http.Error(writer, "Folder already exists, please use a different name.", http.StatusInternalServerError)
+	}
+}
+
+func repoHandler(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodPost {
+		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var name RepoName
+
+	if e := json.NewDecoder(request.Body).Decode(&name); e != nil {
+        http.Error(writer, e.Error(), http.StatusBadRequest)
+        return
+    }
+
+	access_code := db.GenerateAccessCode()
+	targetPath := UploadPath + access_code
+
+	_, err := os.Stat(targetPath)
+	if os.IsNotExist(err) {
+		err := os.Mkdir(targetPath, 0755)
+		if err != nil {
+			fmt.Println(err)
+			http.Error(writer, "Failed to create the repo, please refresh and try again.", http.StatusInternalServerError)
+		}
+		fmt.Println("Success")
+
+		writer.Header().Set("Content-Type", "application/json")
+		response := Response{
+			AccessCode: access_code,
+			Status: 200,
+		}
+
+		if err := json.NewEncoder(writer).Encode(response); err != nil {
+        	http.Error(writer, err.Error(), http.StatusInternalServerError)
+    	}
+
+	} else {
+		http.Error(writer, "Repo already exists, please use a different name.", http.StatusInternalServerError)
 	}
 }

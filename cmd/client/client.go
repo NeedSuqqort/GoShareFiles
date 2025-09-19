@@ -2,31 +2,39 @@ package client
 
 import (
 	fileHandler "filesharing/pkg/FileServerHandler"
+	"filesharing/pkg/middleware"
 	"html/template"
 	"net/http"
 	"strings"
-	"filesharing/pkg/middleware"
 )
 
-func Init () {
+func Init() {
 	http.Handle("/uploads/",middleware.BreadcrumbMiddleware(http.HandlerFunc(uploadsHandler)))
     http.HandleFunc("/uploadFile/", uploadFileHandler)
+	http.HandleFunc("/", mainPageHandler)
 }
 
-func render (writer http.ResponseWriter, data interface{}, templates ...string ) {
+func render(writer http.ResponseWriter, data interface{}, templates ...string) {
 	t := template.Must(template.ParseFiles(templates...))
 	err := t.Execute(writer, data)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
-func uploadsHandler (writer http.ResponseWriter, request *http.Request) {
-	path := request.URL.Path
-	data := fileHandler.GetServerFilesHandler(strings.TrimPrefix(path, fileHandler.UploadPath[1:]))
+func uploadsHandler(writer http.ResponseWriter, request *http.Request) {
+	
+	path := strings.TrimPrefix(request.URL.Path, fileHandler.UploadPath[1:])
+	if path == "" {
+		http.Redirect(writer, request, "/", http.StatusMovedPermanently)
+		return
+	}
 
+	data := fileHandler.GetServerFilesHandler(path)
 	if data == nil {
-		http.Error(writer, "Could not read the file server. Please try again later", http.StatusInternalServerError)
+		http.Error(writer, "Cannot locate the resource.", http.StatusNotFound)
+		return
 	}
 
 	breadcrumbs := middleware.GetBreadcrumbs(request)
@@ -34,6 +42,10 @@ func uploadsHandler (writer http.ResponseWriter, request *http.Request) {
 	render(writer,  data, "./templates/layout.html", "./templates/breadcrumb.html", "./templates/uploads.html")
 }
 
-func uploadFileHandler (writer http.ResponseWriter, request *http.Request) {
+func uploadFileHandler(writer http.ResponseWriter, request *http.Request) {
 	render(writer, nil, "./templates/layout.html", "./templates/uploadFile.html")
 }
+
+func mainPageHandler(writer http.ResponseWriter, request *http.Request) {
+	render(writer, nil, "./templates/layout.html", "./templates/index.html")
+}	
