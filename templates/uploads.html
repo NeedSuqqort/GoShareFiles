@@ -104,6 +104,15 @@
     .create-folder-btn:hover {
         background-color: #3ae374;
     }
+    #access-code {
+        font-size: 1.25rem;
+        margin-left: 2.5rem;
+        color: #333;
+        text-decoration: none;
+        font-weight: bold;
+        display: flex;
+        align-items: flex-start;
+    }
 </style>
 <script>
     console.log('{{.Breadcrumbs}}')
@@ -198,6 +207,9 @@
 {{define "content"}}
 <h1 style="text-align: center; margin-bottom: 2rem;">Uploaded Files</h1>
 {{template "breadcrumb.html" .Breadcrumbs}}
+<div id="access-code">
+    <p>Access Code: {{ .AccessCode }}</p>
+</div>
 <div class="upload-bar">
     <form id="upload-bar-form" action="/upload" method="post" enctype="multipart/form-data">
         <input type="file" name="file" class="upload-input" required />

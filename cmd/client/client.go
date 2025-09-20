@@ -3,6 +3,7 @@ package client
 import (
 	fileHandler "filesharing/pkg/FileServerHandler"
 	"filesharing/pkg/middleware"
+	"fmt"
 	"html/template"
 	"net/http"
 	"strings"
@@ -39,6 +40,8 @@ func uploadsHandler(writer http.ResponseWriter, request *http.Request) {
 
 	breadcrumbs := middleware.GetBreadcrumbs(request)
 	data["Breadcrumbs"] = breadcrumbs
+	fmt.Println(path)
+	data["AccessCode"] = path[:5]
 	render(writer,  data, "./templates/layout.html", "./templates/breadcrumb.html", "./templates/uploads.html")
 }
 

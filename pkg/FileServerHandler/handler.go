@@ -2,14 +2,14 @@ package fileserverhandler
 
 import (
 	"archive/zip"
+	"encoding/json"
+	db "filesharing/internal/data"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	"encoding/json"
-	db "filesharing/internal/data"
 )
 
 const UploadPath = "./uploads/"
@@ -255,12 +255,20 @@ func repoHandler(writer http.ResponseWriter, request *http.Request) {
         return
     }
 
-	access_code := db.GenerateAccessCode()
+	access_code, e := db.AddRepo(name.Name)
+	
+	if e != nil {
+		http.Error(writer, e.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	targetPath := UploadPath + access_code
 
 	_, err := os.Stat(targetPath)
+
 	if os.IsNotExist(err) {
 		err := os.Mkdir(targetPath, 0755)
+
 		if err != nil {
 			fmt.Println(err)
 			http.Error(writer, "Failed to create the repo, please refresh and try again.", http.StatusInternalServerError)

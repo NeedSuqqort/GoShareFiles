@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	db "filesharing/internal/data"
 	"net/http"
 	"strings"
 )
@@ -27,13 +28,23 @@ func BreadcrumbMiddleware(next http.Handler) http.Handler {
 
 		subpaths := strings.Split(path,"/")
 		breadcrumbs := []BreadCrumbData{}
-		for _, folderName := range subpaths {
+		for idx, folderName := range subpaths {
 			if folderName == "" {
 				continue
 			}
+
 			curpath += folderName + "/"
+
+			if idx == 0 {
+				repo, err := db.QueryRepoByCode(folderName)
+				if err == nil {
+					folderName = repo.Name
+				}
+			}
+
 			breadcrumbs = append(breadcrumbs, BreadCrumbData{DisplayName: folderName, URL: curpath, IsEndOfPath: false})
 		}
+
 		breadcrumbs[len(breadcrumbs)-1].IsEndOfPath = true
 		ctx := context.WithValue(request.Context(), breadcrumbKey, breadcrumbs)
         next.ServeHTTP(writer, request.WithContext(ctx))
