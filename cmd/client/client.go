@@ -11,7 +11,7 @@ import (
 
 func Init() {
 	http.Handle("/uploads/",middleware.BreadcrumbMiddleware(http.HandlerFunc(uploadsHandler)))
-    http.HandleFunc("/uploadFile/", uploadFileHandler)
+    // http.HandleFunc("/uploadFile/", uploadFileHandler)
 	http.HandleFunc("/", mainPageHandler)
 }
 

@@ -83,7 +83,7 @@
         border-radius: 4px;
         flex: 1;
     }
-    .upload-btn, .create-folder-btn {
+    .upload-btn, .upload-folder-btn, .create-folder-btn {
         padding: 0.5rem 1rem;
         border: none;
         border-radius: 4px;
@@ -92,10 +92,10 @@
         margin: 0 5px 0 5px;
         transition: background-color 0.3s ease;
     }
-    .upload-btn {
+    .upload-btn, .upload-folder-btn {
         background-color: #667eea;
     }
-    .upload-btn:hover {
+    .upload-btn:hover, .upload-folder-btn:hover {
         background-color: #764ba2;
     }
     .create-folder-btn {
@@ -115,7 +115,9 @@
     }
 </style>
 <script>
-    console.log('{{.Breadcrumbs}}')
+    // console.log('{{.Breadcrumbs}}')
+    let currentFolderName = ""
+
     function handleViewMore(path, isDir) {
         if (isDir === "false") {
             return
@@ -154,6 +156,15 @@
         .catch((error) => {
             console.log(error)
         })
+    }
+
+    function getFolderName() {
+        let files = event.target.files;
+        if (files.length > 0) {
+            let folderName = files[0].webkitRelativePath.split('/')[0];
+            console.log("Folder name:", folderName);
+            currentFolderName = folderName
+        }
     }
 
     $(document).ready(() => {
@@ -200,6 +211,35 @@
                 console.log(error)
             })
         })
+
+        $("#upload-folder-form").on('submit',(event) => {
+            event.preventDefault()
+            const data = new FormData($("#upload-folder-form")[0])
+            const files = document.getElementById("allFiles").files
+            data.append("folder_name", currentFolderName)
+            data.append("path", window.location.pathname)
+
+            for (let i=0; i < files.length; i++) {
+                data.append('files',files[i])
+            }
+
+            fetch('/folders/', {
+                method: "POST",
+                body: data
+            })
+            .then((response) => {
+                if (response.status === 200) {
+                    $("#message").text("File uploaded successfully.")
+                    $("#upload-bar-form")[0].reset()
+                    location.reload()
+                } else {
+                    $("#message").text("Upload failed. Please try again.")
+                }
+            })
+            .catch((error) => {
+                console.log(error)
+            })
+        })
     })
 </script>
 {{end}}
@@ -211,11 +251,15 @@
     <p>Access Code: {{ .AccessCode }}</p>
 </div>
 <div class="upload-bar">
-    <form id="upload-bar-form" action="/upload" method="post" enctype="multipart/form-data">
+    <form id="upload-bar-form" method="post" enctype="multipart/form-data">
         <input type="file" name="file" class="upload-input" required />
         <button type="submit" class="upload-btn">Upload File</button>
     </form>
-    <form id="create-folder-form" action="/create-folder" method="post">
+    <form id="upload-folder-form" method="post">
+        <input type="file" name="folder" class="upload-input" id="allFiles" onchange="getFolderName()" directory webkitdirectory mozdirectory required/>
+        <button type="submit" class="upload-folder-btn">Upload Folder</button>
+    </form>
+    <form id="create-folder-form" method="post">
         <input type="text" name="folder-name" placeholder="New Folder Name" class="upload-input" required />
         <button type="submit" class="create-folder-btn">Create Folder</button>
     </form>
