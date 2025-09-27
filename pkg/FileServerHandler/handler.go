@@ -16,7 +16,7 @@ const UploadPath = "./uploads/"
 
 type FileInfo struct {
 	Name  string      `json:"name"`
-	Size  int64       `json:"size"`
+	Size  string      `json:"size"`
 	Path  string      `json:"path"`
 	Time  string      `json:"time"`
 	Mode  os.FileMode `json:"mode"`
@@ -214,7 +214,7 @@ func GetServerFilesHandler(path string) map[string]interface{} {
 
 		fileInfos = append(fileInfos, FileInfo{
 			Name:  fileInfo.Name(),
-			Size:  fileInfo.Size(),
+			Size:  getFileSizeInString(int(fileInfo.Size())),
 			Time:  fileInfo.ModTime().Format("2006-01-02 15:04:05"),
 			Mode:  fileInfo.Mode(),
 			Path:  filepath.Join(path, fileInfo.Name()),
