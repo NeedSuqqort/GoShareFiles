@@ -34,99 +34,9 @@ type Response struct {
 
 func Init() {
 	os.MkdirAll(UploadPath, os.ModePerm)
-	http.HandleFunc("/upload/", uploadHandler)
 	http.HandleFunc("/files/", filesHandler)
 	http.HandleFunc("/create-folder/", folderHandler)
 	http.HandleFunc("/create-repo/", repoHandler)
-	http.HandleFunc("/folders/", uploadFolderHandler)
-}
-
-func uploadHandler(writer http.ResponseWriter, request *http.Request) {
-
-	switch request.Method {
-
-	case "POST":
-
-		file, header, err := request.FormFile("file")
-		path := request.FormValue("path")
-		fmt.Println("Upload path:", path)
-
-		if err != nil {
-			http.Error(writer, "Could not receive your uploaded file, please try again.", http.StatusBadRequest)
-		}
-		defer file.Close()
-
-		outFile, err := os.Create(UploadPath + header.Filename)
-		if err != nil {
-			http.Error(writer, "Unable to create the file.", http.StatusInternalServerError)
-			return
-		}
-		defer outFile.Close()
-
-		_, err = io.Copy(outFile, file)
-		if err != nil {
-			http.Error(writer, "Unable to save the file. ", http.StatusInternalServerError)
-		}
-
-		fmt.Fprintf(writer, "File %s uploaded successfully.", header.Filename)
-
-	default:
-		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
-
-	}
-}
-
-func uploadFolderHandler(writer http.ResponseWriter, request *http.Request) {
-
-	if request.Method != "POST" {
-		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	err := request.ParseMultipartForm(200 << 20) // Max 200MB
-
-	if err != nil {
-		http.Error(writer, "Unable to parse the request data", http.StatusBadRequest)
-	}
-
-	formData := request.MultipartForm
-
-	path := request.FormValue("path")
-	folderName := request.FormValue("folder_name")
-
-	fmt.Println("Upload path:", path)
-	files := formData.File["files"]
-
-	err = os.Mkdir(UploadPath+strings.TrimPrefix(path, UploadPath[1:])+folderName, 0755)
-
-	if err != nil {
-		fmt.Println(err.Error())
-		http.Error(writer, "Folder names cannot be duplicated", http.StatusInternalServerError)
-	}
-
-	for _, fileToUpload := range files {
-		file, err := fileToUpload.Open()
-
-		if err != nil {
-			fmt.Fprintf(writer, "Could not open file: %s", fileToUpload.Filename)
-			continue
-		}
-		defer file.Close()
-
-		outFile, err := os.Create(UploadPath + strings.TrimPrefix(path, UploadPath[1:]) + "/" + folderName + "/" + fileToUpload.Filename)
-		if err != nil {
-			fmt.Fprintf(writer, "Could not create file: %s", fileToUpload.Filename)
-			continue
-		}
-		defer outFile.Close()
-
-		_, err = io.Copy(outFile, file)
-		if err != nil {
-			fmt.Fprintf(writer, "Unable to save the file: %s", fileToUpload.Filename)
-			continue
-		}
-		fmt.Fprintf(writer, "File %s uploaded successfully.", fileToUpload.Filename)
-	}
 }
 
 func filesHandler(writer http.ResponseWriter, request *http.Request) {
@@ -134,6 +44,7 @@ func filesHandler(writer http.ResponseWriter, request *http.Request) {
 
 	switch request.Method {
 
+	// retrieve files and folders, and zip folders for download
 	case "GET":
 		_, e := os.ReadDir(filepath.Join(UploadPath, filename))
 		if e != nil {
