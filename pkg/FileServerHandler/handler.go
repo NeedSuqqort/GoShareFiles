@@ -24,12 +24,12 @@ type FileInfo struct {
 }
 
 type RepoName struct {
-    Name string `json:"name"`
+	Name string `json:"name"`
 }
 
 type Response struct {
-    AccessCode string `json:"access_code"`
-    Status     int    `json:"status"`
+	AccessCode string `json:"access_code"`
+	Status     int    `json:"status"`
 }
 
 func Init() {
@@ -38,95 +38,95 @@ func Init() {
 	http.HandleFunc("/files/", filesHandler)
 	http.HandleFunc("/create-folder/", folderHandler)
 	http.HandleFunc("/create-repo/", repoHandler)
-	http.HandleFunc("/folders/",uploadFolderHandler)
+	http.HandleFunc("/folders/", uploadFolderHandler)
 }
 
 func uploadHandler(writer http.ResponseWriter, request *http.Request) {
 
 	switch request.Method {
 
-		case "POST":
+	case "POST":
 
-			file, header, err := request.FormFile("file")
-			path := request.FormValue("path")
-			fmt.Println("Upload path:", path)
+		file, header, err := request.FormFile("file")
+		path := request.FormValue("path")
+		fmt.Println("Upload path:", path)
 
-			if err != nil {
-				http.Error(writer, "Could not receive your uploaded file, please try again.", http.StatusBadRequest)
-			}
-			defer file.Close()
+		if err != nil {
+			http.Error(writer, "Could not receive your uploaded file, please try again.", http.StatusBadRequest)
+		}
+		defer file.Close()
 
-			outFile, err := os.Create(UploadPath + header.Filename)
-			if err != nil {
-				http.Error(writer, "Unable to create the file.", http.StatusInternalServerError)
-				return
-			}
-			defer outFile.Close()
+		outFile, err := os.Create(UploadPath + header.Filename)
+		if err != nil {
+			http.Error(writer, "Unable to create the file.", http.StatusInternalServerError)
+			return
+		}
+		defer outFile.Close()
 
-			_, err = io.Copy(outFile, file)
-			if err != nil {
-				http.Error(writer, "Unable to save the file. ", http.StatusInternalServerError)
-			}
+		_, err = io.Copy(outFile, file)
+		if err != nil {
+			http.Error(writer, "Unable to save the file. ", http.StatusInternalServerError)
+		}
 
-			fmt.Fprintf(writer, "File %s uploaded successfully.", header.Filename)
+		fmt.Fprintf(writer, "File %s uploaded successfully.", header.Filename)
 
-		default:
-			http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
+	default:
+		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
 
 	}
 }
 
 func uploadFolderHandler(writer http.ResponseWriter, request *http.Request) {
 
-		if request.Method != "POST" {
-			http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
+	if request.Method != "POST" {
+		http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-		err := request.ParseMultipartForm(200 << 20) // Max 200MB 
+	err := request.ParseMultipartForm(200 << 20) // Max 200MB
+
+	if err != nil {
+		http.Error(writer, "Unable to parse the request data", http.StatusBadRequest)
+	}
+
+	formData := request.MultipartForm
+
+	path := request.FormValue("path")
+	folderName := request.FormValue("folder_name")
+
+	fmt.Println("Upload path:", path)
+	files := formData.File["files"]
+
+	err = os.Mkdir(UploadPath+strings.TrimPrefix(path, UploadPath[1:])+folderName, 0755)
+
+	if err != nil {
+		fmt.Println(err.Error())
+		http.Error(writer, "Folder names cannot be duplicated", http.StatusInternalServerError)
+	}
+
+	for _, fileToUpload := range files {
+		file, err := fileToUpload.Open()
 
 		if err != nil {
-			http.Error(writer, "Unable to parse the request data", http.StatusBadRequest)
+			fmt.Fprintf(writer, "Could not open file: %s", fileToUpload.Filename)
+			continue
 		}
+		defer file.Close()
 
-		formData := request.MultipartForm
-
-		path := request.FormValue("path")
-		folderName := request.FormValue("folder_name")
-
-		fmt.Println("Upload path:", path)
-		files := formData.File["files"]
-
-		err = os.Mkdir(UploadPath + strings.TrimPrefix(path, UploadPath[1:]) + folderName, 0755)
-
+		outFile, err := os.Create(UploadPath + strings.TrimPrefix(path, UploadPath[1:]) + "/" + folderName + "/" + fileToUpload.Filename)
 		if err != nil {
-			fmt.Println(err.Error())
-			http.Error(writer, "Folder names cannot be duplicated", http.StatusInternalServerError)
+			fmt.Fprintf(writer, "Could not create file: %s", fileToUpload.Filename)
+			continue
 		}
+		defer outFile.Close()
 
-		for _, fileToUpload := range files {
-			file, err := fileToUpload.Open()
-
-			if err != nil {
-				fmt.Fprintf(writer, "Could not open file: %s",fileToUpload.Filename)
-				continue
-			}
-			defer file.Close()
-
-			outFile, err := os.Create(UploadPath + strings.TrimPrefix(path, UploadPath[1:]) + "/"  + folderName + "/" +fileToUpload.Filename)
-			if err != nil {
-				fmt.Fprintf(writer, "Could not create file: %s", fileToUpload.Filename)
-				continue
-			}
-			defer outFile.Close()
-
-			_, err = io.Copy(outFile, file)
-			if err != nil {
-				fmt.Fprintf(writer, "Unable to save the file: %s", fileToUpload.Filename)
-				continue
-			}
-			fmt.Fprintf(writer, "File %s uploaded successfully.", fileToUpload.Filename)
+		_, err = io.Copy(outFile, file)
+		if err != nil {
+			fmt.Fprintf(writer, "Unable to save the file: %s", fileToUpload.Filename)
+			continue
 		}
+		fmt.Fprintf(writer, "File %s uploaded successfully.", fileToUpload.Filename)
+	}
 }
 
 func filesHandler(writer http.ResponseWriter, request *http.Request) {
@@ -134,119 +134,119 @@ func filesHandler(writer http.ResponseWriter, request *http.Request) {
 
 	switch request.Method {
 
-		case "GET":
-			_, e := os.ReadDir(filepath.Join(UploadPath, filename))
-			if e != nil {
-				if pathErr, ok := e.(*os.PathError); ok {
-					file, err := os.Open(filepath.Join(UploadPath, filename))
-					if err != nil {
-						http.Error(writer, "Unable to read the file. Check if the file is corrupted.", http.StatusNotFound)
-						return
-					}
-					defer file.Close()
-					writer.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(filename))
-					writer.Header().Set("Content-Type", "application/octet-stream")
-					io.Copy(writer, file)
-					fmt.Fprintf(writer, "File %s downloaded successfully.", filename)
+	case "GET":
+		_, e := os.ReadDir(filepath.Join(UploadPath, filename))
+		if e != nil {
+			if pathErr, ok := e.(*os.PathError); ok {
+				file, err := os.Open(filepath.Join(UploadPath, filename))
+				if err != nil {
+					http.Error(writer, "Unable to read the file. Check if the file is corrupted.", http.StatusNotFound)
+					return
+				}
+				defer file.Close()
+				writer.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(filename))
+				writer.Header().Set("Content-Type", "application/octet-stream")
+				io.Copy(writer, file)
+				fmt.Fprintf(writer, "File %s downloaded successfully.", filename)
 
+			} else {
+				http.Error(writer, pathErr.Error(), http.StatusNotFound)
+			}
+		} else {
+
+			zipfile := filepath.Base(filename) + ".zip"
+			zipWriter := zip.NewWriter(writer)
+
+			defer zipWriter.Close()
+
+			writer.Header().Set("Content-Disposition", "attachment; filename="+zipfile)
+			writer.Header().Set("Content-Type", "application/zip")
+
+			err := filepath.Walk(filepath.Join(UploadPath, filename), func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+
+				if info.IsDir() {
+					return nil
+				}
+
+				path = filepath.ToSlash(path)
+				file, err := os.Open(path)
+				if err != nil {
+					return err
+				}
+				defer file.Close()
+
+				fmt.Println("Zipping file:", path)
+				fmt.Println("Copying from:", file.Name())
+
+				zipFile, err := zipWriter.Create(path)
+				if err != nil {
+					return err
+				}
+
+				_, err = io.Copy(zipFile, file)
+				return err
+			})
+
+			if err != nil {
+				http.Error(writer, "Unable to zip the folder. Please retry by downloading again.", http.StatusInternalServerError)
+			}
+		}
+
+	case "POST":
+
+		err := request.ParseMultipartForm(200 << 20) // Max 200MB
+
+		if err != nil {
+			http.Error(writer, "Unable to parse the request data", http.StatusBadRequest)
+		}
+
+		path := request.FormValue("path")
+		fmt.Println("Upload path:", path)
+		file, header, err := request.FormFile("file")
+
+		if err != nil {
+			http.Error(writer, "Could not receive your uploaded file, please try again.", http.StatusBadRequest)
+		}
+		defer file.Close()
+
+		outFile, err := os.Create(UploadPath + strings.TrimPrefix(path, UploadPath[1:]) + "/" + header.Filename)
+		if err != nil {
+			http.Error(writer, "Unable to create the file.", http.StatusInternalServerError)
+			return
+		}
+		defer outFile.Close()
+
+		_, err = io.Copy(outFile, file)
+		if err != nil {
+			http.Error(writer, "Unable to save the file. ", http.StatusInternalServerError)
+		}
+
+		fmt.Fprintf(writer, "File %s uploaded successfully.", header.Filename)
+
+	case "DELETE":
+		target := UploadPath + filename
+		err := os.RemoveAll(target)
+
+		if err != nil {
+			if os.IsNotExist(err) {
+				info, statErr := os.Stat(target)
+				if statErr == nil && info.IsDir() {
+					http.Error(writer, "Folder does not exist.", http.StatusNotFound)
 				} else {
-					http.Error(writer, pathErr.Error(), http.StatusNotFound)
+					http.Error(writer, "File does not exist.", http.StatusNotFound)
 				}
 			} else {
-				
-				zipfile := filepath.Base(filename) + ".zip"
-				zipWriter := zip.NewWriter(writer)
-
-				defer zipWriter.Close()
-								
-				writer.Header().Set("Content-Disposition", "attachment; filename="+zipfile)
-				writer.Header().Set("Content-Type", "application/zip")
-
-				err := filepath.Walk(filepath.Join(UploadPath,filename), func(path string, info os.FileInfo, err error) error {
-					if err != nil {
-						return err
-					}
-
-					if info.IsDir() {
-						return nil
-					}
-
-					path = filepath.ToSlash(path)
-					file, err := os.Open(path)
-					if err != nil {
-						return err
-					}
-					defer file.Close()
-
-					fmt.Println("Zipping file:", path)
-					fmt.Println("Copying from:", file.Name())
-
-					zipFile, err := zipWriter.Create(path)
-					if err != nil {
-						return err
-					}
-
-					_, err = io.Copy(zipFile, file)
-					return err
-				})
-
-				if err != nil {
-					http.Error(writer, "Unable to zip the folder. Please retry by downloading again.", http.StatusInternalServerError)
-				}
+				http.Error(writer, "Failed to delete the directory, please try again later.", http.StatusInternalServerError)
 			}
-		
-		case "POST":
+		}
 
-			err := request.ParseMultipartForm(200 << 20) // Max 200MB
-			
-			if err != nil {
-				http.Error(writer, "Unable to parse the request data", http.StatusBadRequest)
-			}
+		fmt.Fprintf(writer, "File %s downloaded successfully.", filename)
 
-			path := request.FormValue("path")
-			fmt.Println("Upload path:", path)
-			file, header, err := request.FormFile("file")
-
-			if err != nil {
-				http.Error(writer, "Could not receive your uploaded file, please try again.", http.StatusBadRequest)
-			}
-			defer file.Close()
-
-			outFile, err := os.Create(UploadPath + strings.TrimPrefix(path, UploadPath[1:]) + "/" + header.Filename)
-			if err != nil {
-				http.Error(writer, "Unable to create the file.", http.StatusInternalServerError)
-				return
-			}
-			defer outFile.Close()
-
-			_, err = io.Copy(outFile, file)
-			if err != nil {
-				http.Error(writer, "Unable to save the file. ", http.StatusInternalServerError)
-			}
-
-			fmt.Fprintf(writer, "File %s uploaded successfully.", header.Filename)
-
-		case "DELETE":
-			target := UploadPath + filename
-			err := os.RemoveAll(target)
-
-			if err != nil {
-				if os.IsNotExist(err) {
-					info, statErr := os.Stat(target) 
-					if statErr == nil && info.IsDir() {
-						http.Error(writer, "Folder does not exist.", http.StatusNotFound)
-					} else {
-						http.Error(writer, "File does not exist.", http.StatusNotFound)
-					}
-				} else {
-					http.Error(writer, "Failed to delete the directory, please try again later.", http.StatusInternalServerError)
-				}
-			}
-
-			fmt.Fprintf(writer, "File %s downloaded successfully.", filename)
-
-		default:
-			http.Error(writer, "Method not allowed.", http.StatusMethodNotAllowed)
+	default:
+		http.Error(writer, "Method not allowed.", http.StatusMethodNotAllowed)
 	}
 }
 
@@ -304,12 +304,12 @@ func repoHandler(writer http.ResponseWriter, request *http.Request) {
 	var name RepoName
 
 	if e := json.NewDecoder(request.Body).Decode(&name); e != nil {
-        http.Error(writer, e.Error(), http.StatusBadRequest)
-        return
-    }
+		http.Error(writer, e.Error(), http.StatusBadRequest)
+		return
+	}
 
 	access_code, e := db.AddRepo(name.Name)
-	
+
 	if e != nil {
 		http.Error(writer, e.Error(), http.StatusInternalServerError)
 		return
@@ -331,12 +331,12 @@ func repoHandler(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Content-Type", "application/json")
 		response := Response{
 			AccessCode: access_code,
-			Status: 200,
+			Status:     200,
 		}
 
 		if err := json.NewEncoder(writer).Encode(response); err != nil {
-        	http.Error(writer, err.Error(), http.StatusInternalServerError)
-    	}
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+		}
 
 	} else {
 		http.Error(writer, "Repo already exists, please use a different name.", http.StatusInternalServerError)
