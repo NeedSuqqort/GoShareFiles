@@ -15,6 +15,10 @@ func Start_server() {
 	client.Init()
 	server.Init()
 	db.Init()
+
+	styles := http.FileServer(http.Dir("./static"))
+	http.Handle("/static/", http.StripPrefix("/static/", styles))
+
 	fmt.Println("Starting server on :8081")
 	log.Fatal(http.ListenAndServe(":8081", nil))
 }

@@ -1,49 +1,6 @@
 {{template "layout.html" .}}
 
 {{define "head"}}
-<style>
-  #action-block {
-      background-color: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      width: 300px;
-      text-align: center;
-  }
-  input[type="text"] {
-      width: 90%;
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-  }
-  .content {
-    display: flex; 
-    justify-content: center;
-    align-items: center;
-    background-color: transparent;
-    box-shadow: none;
-  }
-  button {
-      width: 100%;
-      padding: 10px;
-      margin: 5px 10px 5px 0;
-      background-color: #007BFF;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-  }
-  button:hover {
-      background-color: #0056b3;
-  }
-  #messages{
-    display: none;
-  }
-  .warning {
-    color: red;
-  }
-</style>
 <script>
   let COOLDOWN = 10000 // 10 seconds
   let lastCreateRepoTime = 0
@@ -156,6 +113,7 @@
 {{end}}
 
 {{define "content"}}
+<link rel="stylesheet" type="text/css" href="/static/styles/index.css">
 <div id="action-block">
   <div id="action-panel">
   </div>

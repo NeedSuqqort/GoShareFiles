@@ -1,0 +1,111 @@
+.files-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 1rem;
+}
+.file-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 1.5rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.file-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+.file-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    word-break: break-word;
+}
+.file-info {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+.file-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 1rem;
+}
+.file-action-btn {
+    flex: 1;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    transition: background-color 0.3s ease;
+}
+.download-btn {
+    background-color: #667eea;
+    color: white;
+}
+.download-btn:hover {
+    background-color: #764ba2;
+}
+.delete-btn {
+    background-color: #ff4757;
+    color: white;
+}
+.delete-btn:hover {
+    background-color: #ff6b81;
+}
+.inspect-btn {
+    background-color: #00840d;
+    color: white;
+}
+.inspect-btn:hover {
+    background-color: #00ff66;
+}
+.no-files {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
+.upload-bar {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+    gap: 1rem;
+}
+.upload-input {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    flex: 1;
+}
+.upload-btn, .upload-folder-btn, .create-folder-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: white;
+    margin: 0 5px 0 5px;
+    transition: background-color 0.3s ease;
+}
+.upload-btn, .upload-folder-btn {
+    background-color: #667eea;
+}
+.upload-btn:hover, .upload-folder-btn:hover {
+    background-color: #764ba2;
+}
+.create-folder-btn {
+    background-color: #2ed573;
+}
+.create-folder-btn:hover {
+    background-color: #3ae374;
+}
+#access-code {
+    font-size: 1.25rem;
+    margin-left: 2.5rem;
+    color: #333;
+    text-decoration: none;
+    font-weight: bold;
+    display: flex;
+    align-items: flex-start;
+}

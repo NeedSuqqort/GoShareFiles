@@ -1,20 +1,5 @@
-<style>
-    .breadcrumb {
-    margin-bottom: 1rem;
-    font-size: 0.9rem;
-    color: #333;
-    }
-
-    .breadcrumb a {
-        text-decoration: none;
-        color: #764ba2;
-    }
-
-    .breadcrumb .separator {
-        margin: 0 0.5rem;
-    }
-</style>
 {{ if . }}
+<link rel="stylesheet" type="text/css" href="/static/styles/breadcrumb.css">
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
         {{ range . }}
